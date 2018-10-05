@@ -78,7 +78,8 @@ class AnnoteFinder(object):
 
 class Viewer(object):
     def __init__(self, data_ext, temporal_vars, static_vars, custom_plt, time_marker=None, background_img=None, foreground_patches=None,
-                 data_ext_pt=None, default_var=None, default_ds=None, default_pt_var=None, default_pt_ds=None, data_limits=None):
+                 data_ext_pt=None, default_var=None, default_ds=None, default_pt_var=None, default_pt_ds=None, data_limits=None,
+                 initial_state_ensemble=None):
         # Set-up Dist dataset
         #self.data_ext = {k: v for k, v in data_ext.items()}
         self.data_ext = {k: v for k, v in data_ext.items() if any(i in temporal_vars for i in v.temporal_vars) or any(j in static_vars for j in v.static_vars)}
@@ -127,6 +128,8 @@ class Viewer(object):
         self.record = {}
 
         self.ts_name_separator = '#'
+
+        self.initial_state_ensemble=initial_state_ensemble
 
         # Set-up Point dataset
         if data_ext_pt is not None:
@@ -565,6 +568,10 @@ class Viewer(object):
                 units = [self.var_units[ds_active][dist_var] for ds_active in valid_ds for dist_var in dist_vars[ds_active]]
                 data_to_plot = {nm: {'t': t, 'v': v, 'unit': u, 'props': p} for nm, t, v, u, p in zip(
                             unique_names, list(ts_t), ts_v, units, props)}
+                data_to_plot["ISE"] = {'t': self.initial_state_ensemble["Suldalsvatn"]['t'],
+                                       'v': self.initial_state_ensemble["Suldalsvatn"]['v'],
+                                       'unit': 'm3_per_sec',
+                                       'props': {'color': '#00000033', 'ensemble': True}}
                 # tsplot.init_plot(list(ts_t), ts_v, unique_names,
                 #                  [self.var_units[ds_active][dist_var] for ds_active in valid_ds for dist_var in dist_vars[ds_active]], props)
                 tsplot.init_plot(data_to_plot)
@@ -829,7 +836,11 @@ class TsPlot(object):
                         #self.lines.append(self.axes[idx].plot(t, v[k], ls=next(self.line_styles[idx]), color=color, label=labels[k], marker=marker, ms=8, markevery=None)[0])
                         l_prop = dict(ls='-', color=color, label=labels[k], marker=marker, ms=4, mec=color, markevery=7)
                         l_prop.update(prop[k])
-                        self.lines.append(self.plot(self.axes[idx], t[k], v[k], l_prop))
+                        if 'ensemble' in prop[k]:
+                            l_prop.pop('percentiles')
+                            self.add_ensemble(idx, t[k], v[k], l_prop)
+                        else:
+                            self.lines.append(self.plot(self.axes[idx], t[k], v[k], l_prop))
                         #self.lines.append(self.axes[idx].plot(t, v[k], ls=ls, color=color, label=labels[k], marker=next(self.markers[0]), ms=8, markevery=None)[0])
 
                         self.axes[idx].tick_params(axis='y', colors=color)
@@ -842,7 +853,11 @@ class TsPlot(object):
                         #self.lines.append(self.axes[-1].plot(t, v[k], ls=next(self.line_styles[idx]), color=color, label=labels[k], marker=marker, ms=8, markevery=None)[0])
                         l_prop = dict(ls='-', color=color, label=labels[k], marker=next(self.markers[idx]), ms=4, mec=color, markevery=7)
                         l_prop.update(prop[k])
-                        self.lines.append(self.plot(self.axes[-1], t[k], v[k], l_prop))
+                        if 'ensemble' in prop[k]:
+                            l_prop.pop('percentiles')
+                            self.add_ensemble(idx, t[k], v[k], l_prop)
+                        else:
+                            self.lines.append(self.plot(self.axes[-1], t[k], v[k], l_prop))
                         #self.lines.append(self.axes[-1].plot(t, v[k], ls=ls, color=color, label=labels[k], marker=next(self.markers[0]), ms=8, markevery=None)[0])
 
                         #print(self.lines)
@@ -872,6 +887,11 @@ class TsPlot(object):
                 self.show_legend(0)
                 self.fig.canvas.draw()
                 self.data.update({labels[k]: data_dict[labels[k]]})  # to take only data which has been sucessfully plotted
+
+    def add_ensemble(self, idx, time, values, props):
+        for v in values:
+            pl = self.plot(self.axes[idx], time, v, props)
+        self.lines.append(pl)  # Append only one of them to legend
 
     def make_format(self, current, other):
         # current and other are axes
