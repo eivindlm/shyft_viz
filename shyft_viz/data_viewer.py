@@ -837,7 +837,7 @@ class TsPlot(object):
                         l_prop = dict(ls='-', color=color, label=labels[k], marker=marker, ms=4, mec=color, markevery=7)
                         l_prop.update(prop[k])
                         if 'ensemble' in prop[k]:
-                            l_prop.pop('percentiles')
+                            l_prop.pop('ensemble')
                             self.add_ensemble(idx, t[k], v[k], l_prop)
                         else:
                             self.lines.append(self.plot(self.axes[idx], t[k], v[k], l_prop))
@@ -854,7 +854,7 @@ class TsPlot(object):
                         l_prop = dict(ls='-', color=color, label=labels[k], marker=next(self.markers[idx]), ms=4, mec=color, markevery=7)
                         l_prop.update(prop[k])
                         if 'ensemble' in prop[k]:
-                            l_prop.pop('percentiles')
+                            l_prop.pop('ensemble')
                             self.add_ensemble(idx, t[k], v[k], l_prop)
                         else:
                             self.lines.append(self.plot(self.axes[-1], t[k], v[k], l_prop))
