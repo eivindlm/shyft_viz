@@ -568,11 +568,12 @@ class Viewer(object):
                 units = [self.var_units[ds_active][dist_var] for ds_active in valid_ds for dist_var in dist_vars[ds_active]]
                 data_to_plot = {nm: {'t': t, 'v': v, 'unit': u, 'props': p} for nm, t, v, u, p in zip(
                             unique_names, list(ts_t), ts_v, units, props)}
-                module_name_hack = unique_names[0].split(self.ts_name_separator)[2]
-                data_to_plot["ISE"] = {'t': self.initial_state_ensemble[module_name_hack]['t'],
-                                       'v': self.initial_state_ensemble[module_name_hack]['v'],
-                                       'unit': 'm3_per_sec',
-                                       'props': {'color': '#00000033', 'ensemble': True}}
+                if self.initial_state_ensemble:
+                    module_name_hack = unique_names[0].split(self.ts_name_separator)[2]
+                    data_to_plot["ISE"] = {'t': self.initial_state_ensemble[module_name_hack]['t'],
+				                           'v': self.initial_state_ensemble[module_name_hack]['v'],
+				                           'unit': 'm3_per_sec',
+				                           'props': {'color': '#00000033', 'ensemble': True}}
                 # tsplot.init_plot(list(ts_t), ts_v, unique_names,
                 #                  [self.var_units[ds_active][dist_var] for ds_active in valid_ds for dist_var in dist_vars[ds_active]], props)
                 tsplot.init_plot(data_to_plot)
